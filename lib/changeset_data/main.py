@@ -2,6 +2,7 @@
 # It is designed for low-storage and low-memory usage so it can easily be run on a GitHub runner.
 # -s or --source => Specify the source URL of the compressed changeset planet file
 # -e or --editor => Filter changesets by editor name
+# The CSV is written to stdout
 
 import xml.sax
 import csv
@@ -124,31 +125,30 @@ def decompressor(q_in, q_out):
 
 def parser(q, editor_filter):
     '''Thread function to parse the xml chunks from the queue'''
-    with open('output.csv', 'w', newline='', encoding='utf-8') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        # Write CSV header
-        csv_writer.writerow(Changeset.headerRow())
+    csv_writer = csv.writer(sys.stdout)
+    # Write CSV header
+    csv_writer.writerow(Changeset.headerRow())
 
-        parser = xml.sax.make_parser()
-        def write(changeset):
-            if changeset.created_by.startswith(editor_filter):
-                csv_writer.writerow(changeset.toRow())
-        parser.setContentHandler(ChangesetHandler(write))
+    parser = xml.sax.make_parser()
+    def write(changeset):
+        if changeset.created_by.startswith(editor_filter):
+            csv_writer.writerow(changeset.toRow())
+    parser.setContentHandler(ChangesetHandler(write))
 
-        while True:
-            try:
-                # Blocks when the queue is empty
-                content = q.get()
-                parser.feed(content)
-                q.task_done()
-            except queue.ShutDown:
-                break
-            except Exception as e:
-                print(f'Parsing error: {e}')
-                q.shutdown(immediate=True)
-                return
+    while True:
+        try:
+            # Blocks when the queue is empty
+            content = q.get()
+            parser.feed(content)
+            q.task_done()
+        except queue.ShutDown:
+            break
+        except Exception as e:
+            print(f'Parsing error: {e}')
+            q.shutdown(immediate=True)
+            return
 
-        parser.close()
+    parser.close()
 
 
 if __name__ == '__main__':

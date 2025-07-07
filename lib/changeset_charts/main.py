@@ -1,9 +1,13 @@
+# Script to generate statistics based on the given changeset CSV via stdin.
+# The script creates an index.html file.
+
 import numpy as np
 import pandas as pd
 import altair as alt
 import panel as pn
 import geopandas as gpd
 import pyproj
+import sys
 from shapely.geometry import box
 
 mainPage = pn.Column(
@@ -32,7 +36,7 @@ mainPage = pn.Column(
 # Load country boundaries
 countries = gpd.read_file('https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip').to_crs(epsg=4326)
 # Load changeset data
-changesets_data = pd.read_csv('output.csv', parse_dates=['created_at', 'closed_at'])
+changesets_data = pd.read_csv(sys.stdin, parse_dates=['created_at', 'closed_at'])
 # Drop changesets without a bbox
 changesets_data.dropna(
     axis=0,
