@@ -17,32 +17,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Build job
+  build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Install changeset_data dependencies
-      run: pip install -r lib/changeset_data/requirements.txt
+    - name: Install python dependencies
+      run: pip install -r lib/requirements.txt
 
-    - name: Install changeset_charts dependencies
-      run: pip install -r lib/changeset_charts/requirements.txt
+    - name: Download, extract & process changeset data to generate stats page
+      run: >
+        curl -L https://planet.openstreetmap.org/planet/changesets-latest.osm.bz2
+        | bzcat
+        | (python lib/parser.py --editor OpenStop)
+        | (python lib/charts.py)
 
-    - name: Load & extract changeset data and generate stats page
-      run: (python lib/changeset_data/main.py -editor OpenStop) | (python lib/changeset_charts/main.py)
-
-    - name: Setup Pages
-      uses: actions/configure-pages@v5
+    - name: Prepare output for Artifact (artifact action requires a directory)
+      run: mkdir pages; mv index.html pages
 
     - name: Upload artifact
+      id: deployment
       uses: actions/upload-pages-artifact@v3
       with:
-        path: 'index.html'
+        path: pages
 
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
