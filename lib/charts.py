@@ -21,7 +21,8 @@ mainPage = pn.Column(
             font-size: 1rem;
         }
 
-        .bk-panel-models-vega-VegaPlot {
+        .bk-panel-models-vega-VegaPlot,
+        .bk-panel-models-tabulator-DataTabulator {
             margin: 0 auto;
         }
 
@@ -35,6 +36,11 @@ mainPage = pn.Column(
 
 # Load country boundaries
 countries = gpd.read_file('https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip').to_crs(epsg=4326)
+# Generate country emoji flags and add additional column
+# Use _EH because https://github.com/nvkelso/natural-earth-vector/issues/268#issuecomment-778832542
+countries['flag'] = countries['ISO_A2_EH'].map(
+    lambda country_code : ''.join(chr(127397 + ord(char)) for char in country_code)
+)
 # Load changeset data
 changesets_data = pd.read_csv(sys.stdin, parse_dates=['created_at', 'closed_at'])
 # Drop changesets without a bbox
@@ -408,5 +414,38 @@ choropleth = alt.Chart(df).mark_geoshape(
     title='Contributors Distribution by Country'
 )
 mainPage.append(pn.pane.Vega(choropleth))
+
+#########################################
+
+mainPage.append(
+    pn.pane.Markdown("""
+        ## Country ranking
+        All countries in which elements were changed via OpenStop.
+    """)
+)
+country_ranking = (changesets_data
+    .groupby(['NAME', 'flag'], as_index=False).agg(
+        total_changes=('num_changes', 'sum'),
+        total_users=('uid', 'nunique'),
+    ).sort_values('total_changes', ascending=False)
+)
+# Filter columns
+country_ranking = country_ranking[['flag', 'NAME', 'total_changes', 'total_users']]
+# Show data table
+mainPage.append(
+    pn.widgets.Tabulator(
+        country_ranking,
+         height=300,
+        disabled=True,
+        show_index=False,
+        titles={
+            'flag': 'Flag',
+            'NAME': 'Country',
+            'total_changes': 'Total changed elements',
+            'total_users': 'Total contributors',
+        }
+    )
+)
+
 
 mainPage.save('index.html', title="OpenStop Statistics")
