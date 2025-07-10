@@ -504,6 +504,55 @@ chart = alt.Chart(df).transform_calculate(
 )
 mainPage.append(pn.pane.Vega(chart))
 
+#########################################
+
+mainPage.append(
+    pn.pane.Markdown("""
+        ## Date of first and last user contribution
+        This shows the first and last time a user contributed via OpenStop.
+        The circle size and color indicates each users total changed elements.<br>
+        All active users are at the top of the chart and all users who only used the app once will be on the X/Y diagonal.
+    """)
+)
+# Aggregate first and last user contribution
+df = (changesets_data
+    .groupby('uid').agg(
+        first_changeset=('created_at', 'min'),
+        last_changeset=('created_at', 'max'),
+        total_changes=('num_changes', 'sum'),
+    )
+)
+domain = [1, df['total_changes'].max()]
+# Create scatter plot
+chart = alt.Chart(df).mark_circle().encode(
+    x=alt.X(
+        'first_changeset',
+        title='First contribution'),
+    y=alt.Y(
+        'last_changeset',
+        title='Last contribution'),
+    size=alt.Size(
+        'total_changes:Q',
+    ).scale(domain=domain),
+    color=alt.Color(
+        'total_changes:Q',
+        title='Total changed elements'
+    ).scale(
+        range=['red','green'],
+        domain=domain
+    ),
+    tooltip=[
+        alt.Tooltip('first_changeset:T', title='First contribution'),
+        alt.Tooltip('last_changeset:T', title='Last contribution'),
+        alt.Tooltip('total_changes:Q', title='Total changed elements')
+    ],
+).properties(
+    width=700,
+    height=600,
+).configure_scale(
+    minSize=30
+).interactive()
+mainPage.append(pn.pane.Vega(chart))
 
 
 mainPage.save('index.html', title="OpenStop Statistics")
