@@ -447,5 +447,63 @@ mainPage.append(
     )
 )
 
+#########################################
+
+mainPage.append(
+    pn.pane.Markdown("""
+        ## Changed elements per month for top 10 countries
+        Shows the total changed elements per month within a country for the top 10 countries with the most changed elements overall.
+    """)
+)
+# Get top 10 countries by contributions
+top_10_countries = (changesets_data
+    .groupby('NAME', as_index=False).agg(
+        total_changes=('num_changes', 'sum'),
+    ).sort_values(
+        'total_changes',
+        ascending=False
+    ).iloc[:10]
+)
+# Aggregate changes per country
+df = (changesets_data
+    .groupby([
+        'NAME',
+        changesets_data['created_at'].dt.to_period('M')
+    ]).agg(
+        total_changes=('num_changes', 'sum'),
+        total_users=('uid', 'nunique'),
+    ).reset_index()
+)
+# Filter rows by top 10 countries
+df = df.loc[df['NAME'].isin(top_10_countries['NAME'])]
+
+# Create stacked area chart
+chart = alt.Chart(df).transform_calculate(
+    # Add artificial country rank column
+    # See: https://stackoverflow.com/a/61343643
+    rank=f'{str({v: i for i, v in enumerate(top_10_countries['NAME'])})}[datum.NAME]'
+).mark_area(
+    interpolate='basis'
+).encode(
+    x=alt.X('created_at:T', title=None),
+    y=alt.Y('total_changes:Q', title='Total changed elements'),
+    color=alt.Color('NAME:N', sort=alt.SortField('rank', 'ascending')),
+    tooltip=[
+        alt.Tooltip('NAME:N', title='Country'),
+        alt.Tooltip('total_changes:Q', title='Total changed elements'),
+        alt.Tooltip('yearmonth(created_at):T', title='Date'),
+    ],
+    # Sort areas by added country rank column
+    order=alt.Order(
+        'rank:O',
+        sort='descending'
+    )
+).properties(
+    width=1000,
+    height=600,
+)
+mainPage.append(pn.pane.Vega(chart))
+
+
 
 mainPage.save('index.html', title="OpenStop Statistics")
