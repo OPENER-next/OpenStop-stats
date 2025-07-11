@@ -131,6 +131,10 @@ chart = alt.Chart(df).mark_area(
 ).encode(
     x=alt.X('created_at').title(None),
     y=alt.Y('accumulated_changes').axis(title='Total changed elements'),
+    tooltip=[
+        alt.Tooltip('created_at', title='Date'),
+        alt.Tooltip('accumulated_changes', title='Changed elements'),
+    ]
 ).properties(
     height=300,
     width='container'
@@ -161,6 +165,10 @@ df['accumulated_users'] = df['users'].cumsum()
 chart = alt.Chart(df).mark_area().encode(
     x=alt.X('created_at').title(None),
     y=alt.Y('accumulated_users').axis(title='Total contributors'),
+    tooltip=[
+        alt.Tooltip('created_at', title='Date'),
+        alt.Tooltip('accumulated_users', title='Contributor count'),
+    ]
 ).properties(
     height=300,
     width='container'
@@ -174,7 +182,7 @@ mainPage.append(
         ## Seasonal user participation (per month)
         This shows the average changed elements and active users per month.<br>
         **Note:** Data before 2023 is excluded because the app was first released in the mids of 2022.
-        Data from the current year is excluded to reduce distortion.
+        Data from the current month is excluded to reduce distortion.
     """)
 )
 
@@ -182,7 +190,7 @@ df = changesets_data.loc[
     # Filter dates before 2023 as the app was introduced in the mids of 2022
     (changesets_data['created_at'] >= '2023-01-01') &
     # Filter dates before the end of the current year
-    (changesets_data['created_at'] < pd.Period.now('Y').strftime('%Y-01-01'))
+    (changesets_data['created_at'] < pd.Period.now('M').strftime('%Y-%m-01'))
 ]
 # Group by month and year and count the number of changesets and distinct users in each group
 df = (df
@@ -210,8 +218,8 @@ base = alt.Chart(df).encode(
 left = base.mark_bar(
     fill='#ff0000'
 ).encode(
-    x=alt.X('total_changes:Q').title('Total changed elements').sort('descending'),
-    tooltip=alt.Tooltip('total_changes', title='Total changed elements'),
+    x=alt.X('total_changes:Q').title('Average changed elements').sort('descending'),
+    tooltip=alt.Tooltip('total_changes', title='Average changed elements'),
 )
 middle = base.mark_text().encode(
     text=alt.Text('month_name:O'),
@@ -220,7 +228,7 @@ middle = base.mark_text().encode(
     title=alt.Title('Month')
 )
 right = base.mark_bar().encode(
-    x=alt.X('total_users:Q').title('Total users'),
+    x=alt.X('total_users:Q').title('Average active users'),
     tooltip=alt.Tooltip('total_users', title='Contributors'),
 )
 mainPage.append(
@@ -260,7 +268,7 @@ middle = base.mark_text().encode(
     title=alt.Title('Year')
 )
 right = base.mark_bar().encode(
-    x=alt.X('total_users:Q').title('Total users'),
+    x=alt.X('total_users:Q').title('Total active users'),
     tooltip=alt.Tooltip('total_users', title='Contributors'),
 )
 mainPage.append(
@@ -319,7 +327,7 @@ middle = base.mark_text().encode(
     )
 )
 right = base.mark_bar().encode(
-    x=alt.X('total_users:Q').title('Total users'),
+    x=alt.X('total_users:Q').title('Total active users'),
     tooltip=alt.Tooltip('total_users', title='Contributors'),
 )
 mainPage.append(
@@ -485,9 +493,19 @@ chart = alt.Chart(df).transform_calculate(
 ).mark_area(
     interpolate='basis'
 ).encode(
-    x=alt.X('created_at:T', title=None),
-    y=alt.Y('total_changes:Q', title='Total changed elements'),
-    color=alt.Color('NAME:N', sort=alt.SortField('rank', 'ascending')),
+    x=alt.X(
+        'created_at:T',
+        title=None
+    ),
+    y=alt.Y(
+        'total_changes:Q',
+        title='Total changed elements'
+    ),
+    color=alt.Color(
+        'NAME:N',
+        sort=alt.SortField('rank', 'ascending'),
+        title='Countries'
+    ),
     tooltip=[
         alt.Tooltip('NAME:N', title='Country'),
         alt.Tooltip('total_changes:Q', title='Total changed elements'),
