@@ -34,6 +34,21 @@ mainPage = pn.Column(
     ]
 ).servable()
 
+# Load OpenStop GitHub release data
+openstop_releases = pd.read_json('https://api.github.com/repos/OPENER-next/OpenStop/releases', orient='records')
+# Filter by columns
+openstop_releases = openstop_releases[['published_at', 'name']]
+# Construct release marks chart
+release_marks = alt.Chart(openstop_releases).mark_rule(
+    strokeDash=[8,8],
+).encode(
+    x=alt.X('published_at'),
+    size=alt.value(1),
+    tooltip=[
+        alt.Tooltip('name', title='Release'),
+        alt.Tooltip('published_at', title='Date'),
+    ]
+)
 # Load country boundaries
 countries = gpd.read_file('https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip').to_crs(epsg=4326)
 # Generate country emoji flags and add additional column
@@ -105,7 +120,7 @@ chart2 = base.mark_line(
 ).encode(
     y=alt.Y('user_count').axis(title='Contributor count'),
 )
-mainPage.append(pn.pane.Vega(alt.vconcat(chart1, chart2)))
+mainPage.append(pn.pane.Vega(alt.vconcat(release_marks + chart1, release_marks + chart2)))
 
 #########################################
 
@@ -139,7 +154,7 @@ chart = alt.Chart(df).mark_area(
     height=300,
     width='container'
 )
-mainPage.append(pn.pane.Vega(chart, css_classes=['narrow-chart']))
+mainPage.append(pn.pane.Vega(release_marks + chart, css_classes=['narrow-chart']))
 
 #########################################
 
@@ -173,7 +188,7 @@ chart = alt.Chart(df).mark_area().encode(
     height=300,
     width='container'
 )
-mainPage.append(pn.pane.Vega(chart, css_classes=['narrow-chart']))
+mainPage.append(pn.pane.Vega(release_marks + chart, css_classes=['narrow-chart']))
 
 #########################################
 
