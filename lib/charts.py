@@ -391,7 +391,11 @@ def countries_timeline(changesets_data):
     )
     # Filter rows by top 10 countries
     df = df.loc[df['NAME'].isin(top_10_countries['NAME'])]
-
+    # Create selection binding
+    selection = alt.selection_point(
+        fields=['NAME'],
+        bind='legend'
+    )
     # Create stacked area chart
     return alt.Chart(df).transform_calculate(
         # Add artificial country rank column
@@ -410,8 +414,10 @@ def countries_timeline(changesets_data):
         ),
         color=alt.Color(
             'NAME:N',
+            # Currently has no effect due to fixed scale
             sort=alt.SortField('rank', 'ascending'),
-            title='Countries'
+            title='Countries',
+            scale=alt.Scale(domain=top_10_countries['NAME'].tolist())
         ),
         tooltip=[
             alt.Tooltip('NAME:N', title='Country'),
@@ -430,6 +436,10 @@ def countries_timeline(changesets_data):
             "type": "fit-x",
             "contains": "padding"
         },
+    ).add_params(
+        selection
+    ).transform_filter(
+        selection
     )
 
 #########################################
