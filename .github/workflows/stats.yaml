@@ -34,14 +34,11 @@ jobs:
         | (python lib/parser.py --editor OpenStop)
         | (python lib/charts.py)
 
-    - name: Prepare output for Artifact (artifact action requires a directory)
-      run: mkdir pages; mv index.html pages
-
     - name: Upload artifact
       id: deployment
       uses: actions/upload-pages-artifact@v3
       with:
-        path: pages
+        path: lib/web
 
   # Deployment job
   deploy:
