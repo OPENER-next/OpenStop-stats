@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>OpenStop Statistics</title>
+  <link rel="stylesheet" href="layout.css">
+  <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css">
+  <script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      for (const ele of document.querySelectorAll('[data-chart-src]')) {
+        vegaEmbed(ele, ele.getAttribute('data-chart-src'));
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <h1 class="text">OpenStop Statistics</h1>
+
+  <section>
+    <div class="text">
+      <h2>Changes and contributor activity</h2>
+      <p>Shows the number of changed elements and active users per day.</p>
+    </div>
+    <div class="chart" data-chart-src="charts/changes_activity.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Total element changes over time</h2>
+      <p>This shows the accumulated amount of changed elements over time.</p>
+    </div>
+    <div class="chart" data-chart-src="charts/total_changes.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Total contributors over time</h2>
+      <p>This shows the accumulated amount of contributors over time.</p>
+    </div>
+    <div class="chart" data-chart-src="charts/total_contributors.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Seasonal user participation (per month)</h2>
+      <p>Shows the average changed elements and active users per month.<br>
+        <b>Note:</b> Data before 2023 is excluded because the app was first released in the mids of 2022.
+        Data from the current month is excluded to reduce distortion.
+      </p>
+    </div>
+    <div class="chart center" data-chart-src="charts/seasonal_participation.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Annual user participation (per year)</h2>
+      <p>Shows the total changed elements and active users per year.</p>
+    </div>
+    <div class="chart center" data-chart-src="charts/annual_participation.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>User engagement by contributions</h2>
+      <p>This groups contributors based on the number of changed elements (contributions).
+        It shows the number of contributors per group and their collective contributions.</p>
+    </div>
+    <div class="chart center" data-chart-src="charts/user_engagement.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Changed elements per country</h2>
+      <p>This shows the total amount of changed elements per country.</p>
+    </div>
+    <div class="chart full" data-chart-src="charts/country_changes.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Contributors per country</h2>
+      <p>This shows the total amount of users that contributed to a particular country.<br>
+        <b>Note:</b> This does not show where the users are from. If a user contributed to multiple countries they will
+        be counted for each country.
+      </p>
+    </div>
+    <div class="chart full" data-chart-src="charts/country_contributors.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Country ranking</h2>
+      <p>All countries in which elements were changed via OpenStop.</p>
+    </div>
+    <div class="chart" id="_country_ranking"></div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const ele = document.getElementById('_country_ranking');
+        new Tabulator(ele, {
+          ajaxURL: 'charts/country_ranking.json',
+          height: 300,
+          layout: 'fitDataStretch',
+          columns: [
+            { title: 'Flag', field: 'flag' },
+            { title: 'Country', field: 'NAME' },
+            { title: 'Total changed elements', field: 'total_changes' },
+            { title: 'Total contributors', field: 'total_users' },
+          ],
+        });
+      });
+    </script>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Changed elements per month for top 10 countries</h2>
+      <p>Shows the total changed elements per month within a country for the top 10 countries with the most changed
+        elements overall.</p>
+    </div>
+    <div class="chart wide" data-chart-src="charts/countries_timeline.json"></div>
+  </section>
+
+  <section>
+    <div class="text">
+      <h2>Date of first and last user contribution</h2>
+      <p>This shows the first and last time a user contributed via OpenStop.
+        The circle size and color indicates each users total changed elements.<br>
+        All active users are at the top of the chart and all users who only used the app once will be on the X/Y
+        diagonal.</p>
+    </div>
+    <div class="chart wide" data-chart-src="charts/user_contributions.json"></div>
+  </section>
+</body>
+
+</html>
