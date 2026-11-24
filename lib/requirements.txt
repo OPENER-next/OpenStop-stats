@@ -1,7 +1,7 @@
-altair==5.5.0
-geopandas==1.1.1
-numpy==2.3.1
-pandas==2.3.0
-panel==1.7.2
-pyproj==3.7.1
-Shapely==2.1.1
+altair==6.3.0
+geopandas==1.2.0
+numpy==2.5.5
+pandas==3.1.1
+panel==1.10.1
+pyproj==3.8.0
+shapely==2.2.0
