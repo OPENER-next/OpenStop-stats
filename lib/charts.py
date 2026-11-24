@@ -99,7 +99,7 @@ def total_changes(changesets_data, release_marks):
 
 def total_contributors(changesets_data, release_marks):
     # Only keep one row per user, remove subsequent occurrences
-    df = changesets_data.drop_duplicates('uid', inplace=False)
+    df = changesets_data.drop_duplicates('uid')
     # Group by 'created_at' day and count the number of entries in each group
     df = (df
         .groupby(pd.Grouper(key='created_at', freq='D'))
@@ -155,7 +155,7 @@ def seasonal_participation(changesets_data):
         ).reset_index()
     )
     # Add additional month name column
-    df['month_name'] = pd.to_datetime(df['created_at'], format='%m').dt.month_name()
+    df['month_name'] = pd.to_datetime(df['created_at'].astype(str), format='%m').dt.month_name()
     # Draw bar charts
     base = alt.Chart(df).encode(
         y=alt.Y('created_at:O').axis(None).sort('descending'),
@@ -516,10 +516,9 @@ if __name__ == '__main__':
     # Load changeset data
     changesets_data = pd.read_csv(sys.stdin, parse_dates=['created_at', 'closed_at'])
     # Drop changesets without a bbox
-    changesets_data.dropna(
+    changesets_data = changesets_data.dropna(
         axis=0,
         subset=['min_lat','min_lon','max_lat','max_lon'],
-        inplace=True
     )
     # Convert dataframe to GeoDataFrame
     def create_bbox(row):
