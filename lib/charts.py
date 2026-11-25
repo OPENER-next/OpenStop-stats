@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 import geopandas as gpd
+import calendar
 import pyproj
 import sys
 from pathlib import Path
@@ -155,7 +156,7 @@ def seasonal_participation(changesets_data):
         ).reset_index()
     )
     # Add additional month name column
-    df['month_name'] = pd.to_datetime(df['created_at'].astype(str), format='%m').dt.month_name()
+    df['month_name'] = df['created_at'].map(lambda m: calendar.month_name[m])
     # Draw bar charts
     base = alt.Chart(df).encode(
         y=alt.Y('created_at:O').axis(None).sort('descending'),
