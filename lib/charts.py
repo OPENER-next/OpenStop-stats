@@ -514,6 +514,8 @@ if __name__ == '__main__':
     countries['flag'] = countries['ISO_A2_EH'].map(
         lambda country_code : ''.join(chr(127397 + ord(char)) for char in country_code)
     )
+    # Load coarser country boundaries for rendering the maps only
+    countries_map = gpd.read_file('https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip').to_crs(epsg=4326)
     # Load changeset data
     changesets_data = pd.read_csv(sys.stdin, parse_dates=['created_at', 'closed_at'])
     # Drop changesets without a bbox
@@ -558,10 +560,10 @@ if __name__ == '__main__':
     user_engagement(changesets_data).save(
         f'{chart_dir}user_engagement.json'
     )
-    country_changes(changesets_data, countries).save(
+    country_changes(changesets_data, countries_map).save(
         f'{chart_dir}country_changes.json'
     )
-    country_contributors(changesets_data, countries).save(
+    country_contributors(changesets_data, countries_map).save(
         f'{chart_dir}country_contributors.json'
     )
     country_ranking(changesets_data).to_json(
