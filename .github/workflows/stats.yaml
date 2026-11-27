@@ -25,12 +25,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.14"
+        cache: pip
+        cache-dependency-path: lib/requirements.txt
 
     - name: Install python dependencies
       run: pip install -r lib/requirements.txt
 
     - name: Download, extract & process changeset data to generate stats page
+      shell: bash
       run: >
         curl -L https://planet.openstreetmap.org/planet/changesets-latest.osm.bz2
         | bzcat

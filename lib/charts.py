@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import altair as alt
 import geopandas as gpd
+import calendar
 import pyproj
 import sys
 from pathlib import Path
@@ -99,7 +100,7 @@ def total_changes(changesets_data, release_marks):
 
 def total_contributors(changesets_data, release_marks):
     # Only keep one row per user, remove subsequent occurrences
-    df = changesets_data.drop_duplicates('uid', inplace=False)
+    df = changesets_data.drop_duplicates('uid')
     # Group by 'created_at' day and count the number of entries in each group
     df = (df
         .groupby(pd.Grouper(key='created_at', freq='D'))
@@ -155,7 +156,7 @@ def seasonal_participation(changesets_data):
         ).reset_index()
     )
     # Add additional month name column
-    df['month_name'] = pd.to_datetime(df['created_at'], format='%m').dt.month_name()
+    df['month_name'] = df['created_at'].map(lambda m: calendar.month_name[m])
     # Draw bar charts
     base = alt.Chart(df).encode(
         y=alt.Y('created_at:O').axis(None).sort('descending'),
@@ -507,19 +508,21 @@ if __name__ == '__main__':
         ]
     )
     # Load country boundaries
-    countries = gpd.read_file('https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip').to_crs(epsg=4326)
+    # Coarser country boundaries (like Natural Earth 110M) lead to discarded changesets on coast lines
+    countries = gpd.read_file('https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip').to_crs(epsg=4326)
     # Generate country emoji flags and add additional column
     # Use _EH because https://github.com/nvkelso/natural-earth-vector/issues/268#issuecomment-778832542
     countries['flag'] = countries['ISO_A2_EH'].map(
         lambda country_code : ''.join(chr(127397 + ord(char)) for char in country_code)
     )
+    # Load coarser country boundaries for rendering the maps only
+    countries_map = gpd.read_file('https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip').to_crs(epsg=4326)
     # Load changeset data
     changesets_data = pd.read_csv(sys.stdin, parse_dates=['created_at', 'closed_at'])
     # Drop changesets without a bbox
-    changesets_data.dropna(
+    changesets_data = changesets_data.dropna(
         axis=0,
         subset=['min_lat','min_lon','max_lat','max_lon'],
-        inplace=True
     )
     # Convert dataframe to GeoDataFrame
     def create_bbox(row):
@@ -558,10 +561,10 @@ if __name__ == '__main__':
     user_engagement(changesets_data).save(
         f'{chart_dir}user_engagement.json'
     )
-    country_changes(changesets_data, countries).save(
+    country_changes(changesets_data, countries_map).save(
         f'{chart_dir}country_changes.json'
     )
-    country_contributors(changesets_data, countries).save(
+    country_contributors(changesets_data, countries_map).save(
         f'{chart_dir}country_contributors.json'
     )
     country_ranking(changesets_data).to_json(
