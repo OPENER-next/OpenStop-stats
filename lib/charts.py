@@ -508,6 +508,7 @@ if __name__ == '__main__':
         ]
     )
     # Load country boundaries
+    # Coarser country boundaries (like Natural Earth 110M) lead to discarded changesets on coast lines
     countries = gpd.read_file('https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip').to_crs(epsg=4326)
     # Generate country emoji flags and add additional column
     # Use _EH because https://github.com/nvkelso/natural-earth-vector/issues/268#issuecomment-778832542
